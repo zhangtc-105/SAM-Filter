@@ -75,11 +75,14 @@ def compute_knn(points, k):
     return distances[:,1:], indices[:,1:]
 
 def main():
-    # filename = "out.ply"
-    # points = read_ply(filename)
-    visualize_depth()
-    points = read_npy()
-    print(points.shape)
+    indices = np.load("mask_indices.npy")
+    indices = indices.T
+    indices = np.hstack((indices, np.zeros((indices.shape[0], 1))))
+    gmm = GaussianMixture(n_components=70)
+    gmm.fit(indices)
+    points = gmm.means_
+    points = points.astype(np.int32)
+    np.save("gmm.npy", points)
 
 if __name__ == "__main__":
     main()
