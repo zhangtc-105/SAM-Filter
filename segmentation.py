@@ -40,11 +40,10 @@ def show_ann(ann, box, image, color_mask=None):
         print("The pixel number close to the white is: ", np.count_nonzero(color_mask))
         m = np.logical_and(m, color_mask)
     indices = np.where(m==True)
-
-    np.save("mask_indices.npy", indices)
     
     img[m] = color
     ax.imshow(img)
+    return indices
 
 def crop_image(image, box):
     # box = [ymin, ymax, xmin, xmax]
@@ -76,22 +75,23 @@ if __name__ == "__main__":
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         height, width, _ = image.shape
-        image = cv2.resize(image, (width, height))
+        # image = cv2.resize(image, (width, height))
         crop_shape = [0., 1.0, 0.4, 1.0]
         box =   [int(crop_shape[0]*height), int(crop_shape[1]*height), int(crop_shape[2]*width), int(crop_shape[3]*width)]
         cropped_image = crop_image(image, box)
         masks = mask_generator.generate(cropped_image)
 
         print("There are a total number of {} masks".format(len(masks)))
-        plt.figure(figsize=(5,5))
+        print(image.shape)
+        plt.figure()
         plt.imshow(image)
         sorted_anns = sorted(masks, key=(lambda x: x['area']), reverse=True)
 
         color_mask = color_filter(image, [255,255,255])
-        show_ann(sorted_anns[0],box, image, color_mask)
+        indices = show_ann(sorted_anns[0],box, image, color_mask)
         plt.axis('off')
-        plt.savefig(os.path.join(output_dir, os.path.basename(image_path)), bbox_inches='tight', pad_inches=0)
-
+        plt.savefig(os.path.join(output_dir, os.path.basename(image_path)))
+        np.save(os.path.join(output_dir, os.path.basename(image_path).split(".")[0]+'mask_indices.npy'), indices)
     output_dir = "output"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
